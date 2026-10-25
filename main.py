@@ -9,7 +9,7 @@ from aiohttp import web
 import os
 
 # --- НАСТРОЙКИ ---
-BOT_TOKEN = "ВСТАВЬ_СЮДА_СВОЙ_ТОКЕН"
+BOT_TOKEN = "8915572654:AAGR994EzZIPvf69KK5lOQRYVqZdtTQT494"
 ADMIN_ID = 8738748123 
 
 logging.basicConfig(level=logging.INFO)
