@@ -16,7 +16,9 @@ logging.basicConfig(level=logging.INFO)
 dp = Dispatcher()
 
 # --- БОТ ---
-@dp.message(CommandStart())
+@dp.message(F.text)
+async def echo_handler(message: Message):
+    await message.answer(f"Ты написал: {message.text}\nНо я бот для отслеживания цен. Напиши /start")
 async def cmd_start(message: Message):
     await message.answer(
         f"Привет, {message.from_user.first_name}!\n"
