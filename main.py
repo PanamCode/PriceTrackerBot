@@ -9,33 +9,36 @@ from aiohttp import web
 import os
 
 # --- НАСТРОЙКИ ---
-BOT_TOKEN = "8915572654:AAGR994EzZIPvf69KK5lOQRYVqZdtTQT494" 
-ADMIN_ID = 8738748123  # Твой ID в Телеграме
+BOT_TOKEN = "ВСТАВЬ_СЮДА_СВОЙ_ТОКЕН"
+ADMIN_ID = 8738748123 
 
 logging.basicConfig(level=logging.INFO)
 dp = Dispatcher()
 
 # --- БОТ ---
-@dp.message(F.text)
-async def echo_handler(message: Message):
-    await message.answer(f"Ты написал: {message.text}\nНо я бот для отслеживания цен. Напиши /start")
+@dp.message(CommandStart())
 async def cmd_start(message: Message):
-    await message.answer(
-        f"Привет, {message.from_user.first_name}!\n"
-        "Это бот для отслеживания цен Price Tracker.\n"
-        "Скоро здесь будут уведомления о скидках."
-    )
+    await message.answer(f"Привет, {message.from_user.first_name}!\nЭто бот для отслеживания цен.")
 
 # --- API (Веб-сервер для расширения) ---
 async def handle_add_item(request):
+    # Заголовки для CORS (чтобы браузер разрешил запрос)
+    headers = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type"
+    }
+
+    # Обработка preflight-запроса от браузера
+    if request.method == 'OPTIONS':
+        return web.Response(headers=headers)
+
     try:
         data = await request.json()
         url = data.get('url')
         target_price = data.get('target_price')
         
         bot = request.app['bot']
-        
-        # Отправляем уведомление тебе в Телеграм
         await bot.send_message(
             ADMIN_ID,
             f"📦 <b>Новый товар добавлен!</b>\n"
@@ -43,10 +46,10 @@ async def handle_add_item(request):
             f"🎯 Желаемая цена: {target_price} ₽"
         )
         
-        return web.json_response({"status": "ok"})
+        return web.json_response({"status": "ok"}, headers=headers)
     except Exception as e:
         logging.error(f"Ошибка: {e}")
-        return web.json_response({"status": "error", "message": str(e)}, status=400)
+        return web.json_response({"status": "error", "message": str(e)}, status=400, headers=headers)
 
 async def start_web_server(bot):
     app = web.Application()
@@ -56,7 +59,7 @@ async def start_web_server(bot):
     runner = web.AppRunner(app)
     await runner.setup()
     
-    # Берем порт из переменной окружения (Bothost сам подставит нужный)
+    # Берем порт из переменной окружения (Bothost сам подставит)
     port = int(os.environ.get("PORT", 8080))
     
     site = web.TCPSite(runner, '0.0.0.0', port)
@@ -67,10 +70,10 @@ async def start_web_server(bot):
 async def main():
     bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     
-    # Запускаем веб-сервер в фоне
+    # Запускаем веб-сервер
     await start_web_server(bot)
     
-    # Запускаем самого бота
+    # Запускаем бота
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
